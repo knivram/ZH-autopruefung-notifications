@@ -19,13 +19,13 @@ COPY . .
 RUN npm run build
 
 # Create production image
-FROM node:22-alpine
+FROM node:22
 
 # Set the working directory
 WORKDIR /app
 
 # Install Playwright dependencies
-RUN apk add --no-cache chromium ttf-freefont freetype fontconfig dumb-init
+RUN apt update && apt install -y chromium fonts-freefont-ttf libfreetype6 fontconfig dumb-init
 
 # Set environment variables for Playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/browsers
@@ -41,7 +41,7 @@ RUN npm ci --production && \
     # Install only the minimal Playwright requirements for Chromium
     npx playwright install-deps chromium && \
     # Create a non-root user to run the application
-    addgroup -S appuser && adduser -S -G appuser appuser && \
+    groupadd -r appuser && useradd -r -g appuser appuser && \
     # Set permissions
     chown -R appuser:appuser /app
 
