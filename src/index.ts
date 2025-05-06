@@ -21,12 +21,7 @@ async function runCheck() {
     console.log('Appointment check completed.');
     console.log('Results:', results);
     
-    if (results.length > 0) {
-      sendNotification(results);
-    } else {
-      console.log('No available appointments found');
-    }
-    
+    sendNotification(results);
   } catch (error) {
     console.error('Error running check:', error);
   } finally {
