@@ -123,89 +123,106 @@ export class DrivingTestScraper {
     }
   }
   
-  async checkForAppointments(location: string): Promise<AppointmentResults[]> {
+  async checkForAppointments(location: string): Promise<AppointmentResults> {
     if (!this.page) throw new Error('Browser not initialized');
     
     console.log(`Checking for appointments at ${location}...`);
+    
+    // Initialize the result with the current location
+    const result: AppointmentResults = {
+      location,
+      availableSlots: []
+    };
     
     try {
       // Select the location from the dropdown
       await this.page.selectOption('select#lieu', { label: location });
       
-      // Need to wait for the calendar to update - this may take a moment
+      // Need to wait for the calendar to update
       await this.page.waitForTimeout(2000);
       await this.page.waitForLoadState('networkidle');
-      
-      const results: AppointmentResults[] = [];
 
       // Check first 6 weeks
       for (let week = 0; week < 6; week++) {
         // For the first iteration, we're already on the first week
         if (week > 0) {
           // Check if the next button is disabled
-          const nextButtonDisabled = await this.page.locator('button:has-text(">")').isDisabled();
+          const nextButton = this.page.locator('button:has-text(">")');
+          const nextButtonDisabled = await nextButton.isDisabled().catch(() => true);
           if (nextButtonDisabled) {
             console.log('Next button is disabled, no more weeks to check');
             break;
           }
           
           // Click next week button
-          await this.page.locator('button:has-text(">")').click();
-          await this.page.waitForTimeout(1000);
+          await nextButton.click();
+          await this.page.waitForTimeout(2000);
+          await this.page.waitForLoadState('networkidle');
         }
         
-        // Get the date headers for each day (Monday to Friday)
-        // First get the day names (Montag, Dienstag, etc.)
-        const dayNames = await this.page.locator('h2').allTextContents();
-        // Then get the dates 
-        const dateHeaders = await this.page.locator('h3').allTextContents();
+        // First take a screenshot to debug
+        // if (week === 0) {
+        //   console.log('Taking a screenshot of the calendar view for debugging');
+        //   await this.page.screenshot({ path: `calendar-${location.replace(/\s/g, '-')}.png` });
+        // }
         
-        console.log(`Week ${week+1}: ${dateHeaders.join(', ')}`);
+        // Gather all date information
+        console.log('Getting day names...');
+        const dayNames = await this.page.locator('#jour h2').allTextContents();
+        console.log('Getting date headers...');
+        const dateHeaders = await this.page.locator('#jour h3').allTextContents();
+        
+        console.log(`Week ${week+1}: Found ${dayNames.length} day names and ${dateHeaders.length} dates`);
+        console.log(`Days: ${dayNames.join(', ')}`);
+        console.log(`Dates: ${dateHeaders.join(', ')}`);
         
         // For each day in the week
         for (let day = 0; day < Math.min(dayNames.length, dateHeaders.length); day++) {
-          const dayName = dayNames[day];
-          const date = dateHeaders[day];
+          const dayName = dayNames[day]?.trim();
+          const date = dateHeaders[day]?.trim();
           
-          if (!date) continue; // Skip if no date found
+          if (!date || !dayName) {
+            console.log(`Skipping day ${day} due to missing name or date`);
+            continue;
+          }
           
-          // Look for the "Keine Termine frei" text
-          const noAppointmentText = await this.page.locator(`h3:has-text("${date}")`)
-            .locator('xpath=./following-sibling::p[contains(text(), "Keine Termine frei")]')
-            .isVisible()
-            .catch(() => false);
-            
+          console.log(`Checking ${dayName} ${date}...`);
+          
+          // Look for appointment slots (buttons) for this date
+          // Check if there are any "Keine Termine frei" (No appointments available) text
+          let noAppointmentText = false;
+          const dayNumber = day + 1; // 1-based index for CSS selector
+          try {
+            // Alternative: check by day number (which should be unique in the week)
+            noAppointmentText = await this.page.locator(`#jour:nth-child(${dayNumber}) p:has-text("Keine Termine frei")`).isVisible().catch(() => false);
+          } catch (e) {
+            console.log(`Could not determine if appointments are available for ${dayName} ${date}`);
+          }
+          
+          // If no "Keine Termine frei" text is found, check for available time slots
           if (!noAppointmentText) {
-            // Get all buttons under this date that represent time slots
-            const timeSlotsElements = await this.page.locator(`h3:has-text("${date}")`)
-              .locator('xpath=./following::button[not(@disabled)]')
-              .all();
-              
-            const timeSlots = await Promise.all(
-              timeSlotsElements.map(element => element.textContent())
-            );
-            
-            const validTimeSlots = timeSlots.filter(Boolean) as string[];
+            // Find all buttons that represent time slots
+            const timeSlotButtons = await this.page.locator(`#jour:nth-child(${dayNumber}) .hour button`).all();
+            console.log(`Found ${timeSlotButtons.length} butons`);
+            const timeSlots = await Promise.all(timeSlotButtons.map(button => button.textContent()));
+            const validTimeSlots = timeSlots.filter(Boolean).map(slot => slot?.trim() || '');
             
             if (validTimeSlots.length > 0) {
               console.log(`Found ${validTimeSlots.length} slots for ${dayName} ${date}: ${validTimeSlots.join(', ')}`);
-              results.push({
-                location,
-                date: `${dayName} ${date}`,
-                availableSlots: validTimeSlots,
-                availableTimesCount: validTimeSlots.length,
+              
+              // Add each time slot with its date
+              validTimeSlots.forEach(time => {
+                result.availableSlots.push(`${dayName} ${date} ${time}`);
               });
             }
-          } else {
-            console.log(`No appointments available for ${dayName} ${date}`);
           }
         }
       }
       
-      return results;
+      return result;
     } catch (error) {
       console.error(`Error checking appointments at ${location}:`, error);
-      return [];
+      return { location, availableSlots: [] };
     }
   }
   
@@ -228,8 +245,10 @@ export class DrivingTestScraper {
     
     // Check each location
     for (const location of config.locations) {
-      const results = await this.checkForAppointments(location);
-      allResults.push(...results);
+      const result = await this.checkForAppointments(location);
+      if (result.availableSlots.length > 0) {
+        allResults.push(result);
+      }
     }
     
     return allResults;

@@ -6,15 +6,15 @@ export function sendNotification(results: AppointmentResults[]): void {
 
   // Format all available slots for all locations
   const availableSlots = results
-    .filter(result => result.availableTimesCount > 0)
+    .filter(result => result.availableSlots.length > 0)
     .map(result => {
-      return `${result.location} (${result.date}): ${result.availableSlots.join(', ')}`;
+      return `${result.location}: ${result.availableSlots.join(', ')}`;
     });
 
   if (!availableSlots.length) return;
 
   const totalAvailable = results.reduce(
-    (sum, result) => sum + result.availableTimesCount,
+    (sum, result) => sum + result.availableSlots.length,
     0
   );
 

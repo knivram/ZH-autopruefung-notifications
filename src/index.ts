@@ -2,11 +2,15 @@ import { DrivingTestScraper } from './scraper';
 import { sendNotification } from './notifications';
 import config from './config';
 
+// Command line arguments
+const args = process.argv.slice(2);
+const isVisible = args.includes('--visible') || args.includes('-v');
+
 async function runCheck() {
   const scraper = new DrivingTestScraper();
   try {
     console.log('Starting appointment check...');
-    await scraper.initialize();
+    await scraper.initialize(!isVisible);  // pass 'false' to headless when visible mode is requested
     
     const isLoggedIn = await scraper.login();
     if (!isLoggedIn) {
