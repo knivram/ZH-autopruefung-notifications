@@ -201,11 +201,19 @@ export class DrivingTestScraper {
           
           // If no "Keine Termine frei" text is found, check for available time slots
           if (!noAppointmentText) {
-            // Find all buttons that represent time slots
-            const timeSlotButtons = await this.page.locator(`#jour:nth-child(${dayNumber}) .hour button`).all();
-            console.log(`Found ${timeSlotButtons.length} butons`);
-            const timeSlots = await Promise.all(timeSlotButtons.map(button => button.textContent()));
-            const validTimeSlots = timeSlots.filter(Boolean).map(slot => slot?.trim() || '');
+            // Get all available time slots directly without worrying about duplicates
+            const timeSlots = await this.page
+              .locator(`#jour:nth-child(${dayNumber}) .hour button:not([disabled])`)
+              .evaluateAll(buttons => 
+                // Using evaluate to get text directly from DOM in a single operation
+                // This also handles deduplication on the browser side
+                [...new Set(buttons.map(btn => btn.textContent?.trim()).filter(Boolean))]
+              );
+            
+            console.log(`Found ${timeSlots.length} unique time slots`);
+            
+            // All slots are already unique and filtered
+            const validTimeSlots = timeSlots as string[];
             
             if (validTimeSlots.length > 0) {
               console.log(`Found ${validTimeSlots.length} slots for ${dayName} ${date}: ${validTimeSlots.join(', ')}`);
