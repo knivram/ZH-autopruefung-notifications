@@ -7,8 +7,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:visible": "node dist/index.js --visible",
-    "dev": "ts-node src/index.ts",
-    "dev:visible": "ts-node src/index.ts --visible",
+    "dev": "node --env-file=.env -r ts-node/register src/index.ts",
+    "dev:visible": "npm run dev -- --visible",
     "watch": "tsc -w"
   },
   "keywords": [],
@@ -18,8 +18,8 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.5.0",
-    "node-notifier": "^10.0.1",
-    "playwright": "^1.52.0"
+    "playwright": "^1.52.0",
+    "telegraf": "^4.16.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.12",
