@@ -1,0 +1,30 @@
+{
+  "name": "zh-autopruefung-poller",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:visible": "node dist/index.js --visible",
+    "dev": "ts-node src/index.ts",
+    "dev:visible": "ts-node src/index.ts --visible",
+    "watch": "tsc -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "node-notifier": "^10.0.1",
+    "playwright": "^1.52.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.12",
+    "@types/node-notifier": "^8.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
