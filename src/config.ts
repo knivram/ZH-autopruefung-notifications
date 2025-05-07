@@ -1,4 +1,4 @@
-import { Config } from "./types";
+import { Config } from './types';
 
 // Get environment variables first
 const holderNumber = process.env.HOLDER_NUMBER;
@@ -10,55 +10,61 @@ const telegramChatId = process.env.TELEGRAM_CHAT_ID;
 
 // Check required variables
 if (!holderNumber) {
-    throw new Error('HOLDER_NUMBER is not set in .env file');
+  throw new Error('HOLDER_NUMBER is not set in .env file');
 }
 
 if (!birthdate) {
-    throw new Error('BIRTHDATE is not set in .env file');
+  throw new Error('BIRTHDATE is not set in .env file');
 }
 
 if (!locationsStr) {
-    throw new Error('LOCATIONS is not set in .env file');
+  throw new Error('LOCATIONS is not set in .env file');
 }
 
 // Parse and validate
-const checkIntervalMinutes = checkIntervalMinutesStr 
-    ? parseInt(checkIntervalMinutesStr, 10) 
-    : (() => { throw new Error('CHECK_INTERVAL_MINUTES is not set in .env file'); })();
+const checkIntervalMinutes = checkIntervalMinutesStr
+  ? parseInt(checkIntervalMinutesStr, 10)
+  : (() => {
+      throw new Error('CHECK_INTERVAL_MINUTES is not set in .env file');
+    })();
 
 const locations = locationsStr
-    .split(',')
-    .map(location => location.trim())
-    .filter(Boolean)
-    .map(location => {
-      const [name, id] = location.split(':');
-      return { name, telegram_topic_id: parseInt(id, 10) };
-    });
+  .split(',')
+  .map((location) => location.trim())
+  .filter(Boolean)
+  .map((location) => {
+    const [name, id] = location.split(':');
+    return { name, telegram_topic_id: parseInt(id, 10) };
+  });
 
 if (locations.length === 0) {
-    throw new Error('LOCATIONS is empty after parsing');
+  throw new Error('LOCATIONS is empty after parsing');
 }
 
-    if (!telegramBotToken) {
-        throw new Error('TELEGRAM_BOT_TOKEN is not set in .env file but TELEGRAM_ENABLED is true');
-    }
-    if (!telegramChatId) {
-        throw new Error('TELEGRAM_CHAT_ID is not set in .env file but TELEGRAM_ENABLED is true');
-    }
+if (!telegramBotToken) {
+  throw new Error(
+    'TELEGRAM_BOT_TOKEN is not set in .env file but TELEGRAM_ENABLED is true',
+  );
+}
+if (!telegramChatId) {
+  throw new Error(
+    'TELEGRAM_CHAT_ID is not set in .env file but TELEGRAM_ENABLED is true',
+  );
+}
 
 // Load configuration from validated environment variables
 const config: Config = {
-    credentials: {
-        holderNumber: holderNumber,
-        birthdate: birthdate,
-    },
-    checkIntervalMinutes: checkIntervalMinutes,
-    locations: locations,
-    url: 'https://portal.stva.zh.ch/ecari-dispoweb/ui/app/init/#/conduite/prive/rendez-vous',
-    telegram: {
-        botToken: telegramBotToken,
-        chatId: telegramChatId,
-    },
+  credentials: {
+    holderNumber: holderNumber,
+    birthdate: birthdate,
+  },
+  checkIntervalMinutes: checkIntervalMinutes,
+  locations: locations,
+  url: 'https://portal.stva.zh.ch/ecari-dispoweb/ui/app/init/#/conduite/prive/rendez-vous',
+  telegram: {
+    botToken: telegramBotToken,
+    chatId: telegramChatId,
+  },
 };
 
 // Validate config

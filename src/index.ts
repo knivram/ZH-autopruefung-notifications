@@ -10,17 +10,17 @@ async function runCheck() {
   const scraper = new DrivingTestScraper();
   try {
     console.log('Starting appointment check...');
-    await scraper.initialize(!isVisible);  // pass 'false' to headless when visible mode is requested
-    
+    await scraper.initialize(!isVisible); // pass 'false' to headless when visible mode is requested
+
     const isLoggedIn = await scraper.login();
     if (!isLoggedIn) {
       throw new Error('Failed to login');
     }
-    
+
     const results = await scraper.checkAllLocations();
     console.log('Appointment check completed.');
     console.log('Results:', results);
-    
+
     sendNotification(results);
   } catch (error) {
     console.error('Error running check:', error);
@@ -36,7 +36,9 @@ runCheck();
 const intervalMs = config.checkIntervalMinutes * 60 * 1000;
 setInterval(runCheck, intervalMs);
 
-console.log(`ZH Autoprüfung Poller started. Checking every ${config.checkIntervalMinutes} minutes.`);
+console.log(
+  `ZH Autoprüfung Poller started. Checking every ${config.checkIntervalMinutes} minutes.`,
+);
 
 // Handle shutdown
 process.on('SIGINT', async () => {
