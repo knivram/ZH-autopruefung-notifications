@@ -51,5 +51,5 @@ USER appuser
 # Set entrypoint with dumb-init to handle signals properly
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-# Command to run the application
-CMD ["node", "dist/index.js"]
+# Command to run the application with Playwright installation first
+CMD ["/bin/sh", "-c", "npx playwright install chromium && node dist/index.js"]
