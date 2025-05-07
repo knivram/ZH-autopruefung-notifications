@@ -22,7 +22,7 @@ BIRTHDATE=DD.MM.YYYY
 # Configuration
 CHECK_INTERVAL_MINUTES=30
 # Available locations: Albisgütli,Hinwil,Regensdorf,Bassersdorf,Winterthur,Bülach
-LOCATIONS=Albisgütli,Hinwil,Regensdorf,Bassersdorf,Winterthur,Bülach
+LOCATIONS=Albisgütli:topic_id,Hinwil:topic_id,Regensdorf:topic_id,Bassersdorf:topic_id,Winterthur:topic_id,Bülach:topic_id
 
 # Telegram Configuration
 TELEGRAM_BOT_TOKEN=your_bot_token_here

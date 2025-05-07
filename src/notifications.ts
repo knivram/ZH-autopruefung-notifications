@@ -2,37 +2,38 @@ import { Telegraf } from 'telegraf';
 import { AppointmentResults } from './types';
 import config from './config';
 
-// Initialize Telegram bot (only if enabled)
 let bot = new Telegraf(config.telegram.botToken);
 
-export function sendNotification(results: AppointmentResults[]): void {
-  const totalAvailable = results.reduce(
-    (sum, result) => sum + result.availableSlots.length,
-    0
-  );
-
-  if (totalAvailable === 0) {
-    bot.telegram.sendMessage(
-      config.telegram.chatId, 
-      'No available appointments found.', 
-      { disable_notification: true }
-    ).then(() => console.log('Telegram notification sent successfully'));
+export async function sendNotification(results: AppointmentResults[]) {
+  if (results.length === 0) {
     return;
   }
 
-  // Send Telegram notification if enabled
-  const message = `*${totalAvailable} Prüfungstermine gefunden!*\n\n${formateAvailableSlots(results)}`;
+  for (const locationResult of results) {
+    const title = `*${locationResult.availableSlots.length} Prüfungstermine gefunden!*`
+    const body = formateAvailableSlots(locationResult.availableSlots)
 
-  bot.telegram.sendMessage(config.telegram.chatId, message, { parse_mode: 'Markdown' })
-    .then(() => console.log('Telegram notification sent successfully'))
-    .catch(err => console.error('Error sending Telegram notification:', err));
-}
+    try {
+      await bot.telegram.sendMessage(
+        config.telegram.chatId,
+        `${title}\n${body}`,
+        {
+          parse_mode: 'Markdown',
+          message_thread_id: locationResult.location.telegram_topic_id
+        }
+      )
+      console.log('Telegram notification sent successfully');
+    } catch (err) {
+      console.error('Error sending Telegram notification:', err);
+    }
+    
+    // Add a delay to avoid hitting Telegram's rate limit
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+};
 
-function formateAvailableSlots(results: AppointmentResults[]): string {
-  return results
-    .map(result => {
-      const slots = result.availableSlots.map(slot => `- ${slot}`).join('\n');
-      return `*${result.location}*:\n${slots}`;
-    })
-    .join('\n\n');
+function formateAvailableSlots(availableSlots: string[]): string {
+  return availableSlots
+    .map(slot => `- ${slot}`)
+    .join('\n');
 }

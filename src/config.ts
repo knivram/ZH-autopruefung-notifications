@@ -1,17 +1,4 @@
-// Load environment variables from .env file
-export interface Config {
-  credentials: {
-    holderNumber: string;
-    birthdate: string;
-  };
-  checkIntervalMinutes: number;
-  locations: string[];
-  url: string;
-  telegram: {
-    botToken: string;
-    chatId: string;
-  };
-}
+import { Config } from "./types";
 
 // Get environment variables first
 const holderNumber = process.env.HOLDER_NUMBER;
@@ -42,7 +29,11 @@ const checkIntervalMinutes = checkIntervalMinutesStr
 const locations = locationsStr
     .split(',')
     .map(location => location.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(location => {
+      const [name, id] = location.split(':');
+      return { name, telegram_topic_id: parseInt(id, 10) };
+    });
 
 if (locations.length === 0) {
     throw new Error('LOCATIONS is empty after parsing');

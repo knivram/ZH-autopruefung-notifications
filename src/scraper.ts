@@ -1,6 +1,7 @@
 import { chromium, Browser, Page, Locator } from 'playwright';
 import { AppointmentResults } from './types';
 import config from './config';
+import { Location } from './types';
 
 export class DrivingTestScraper {
   private browser: Browser | null = null;
@@ -123,10 +124,10 @@ export class DrivingTestScraper {
     }
   }
   
-  async checkForAppointments(location: string): Promise<AppointmentResults> {
+  async checkForAppointments(location: Location): Promise<AppointmentResults> {
     if (!this.page) throw new Error('Browser not initialized');
     
-    console.log(`Checking for appointments at ${location}...`);
+    console.log(`Checking for appointments at ${location.name}...`);
     
     // Initialize the result with the current location
     const result: AppointmentResults = {
@@ -136,8 +137,8 @@ export class DrivingTestScraper {
     
     try {
       // Select the location from the dropdown
-      await this.page.selectOption('select#lieu', { label: location });
-      
+      await this.page.selectOption('select#lieu', { label: location.name });
+
       // Need to wait for the calendar to update
       await this.page.waitForTimeout(2000);
       await this.page.waitForLoadState('networkidle');
